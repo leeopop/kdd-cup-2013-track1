@@ -1,3 +1,4 @@
+source("utils.R")
 require("compiler")
 enableJIT(3) 
 setCompilerOptions(suppressUndefined = T)

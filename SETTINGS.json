@@ -1,5 +1,5 @@
 {
-	"working_dir": "/home/khlee/workspace/2ndPlace/",
-	"model_path": "/home/khlee/workspace/2ndPlace/rf1.pickle",
-    "submission_path": "/home/khlee/workspace/2ndPlace/rf1.csv"
+	"working_dir": "/home/khlee/git/kdd-cup-2013-track1",
+	"model_path": "/home/khlee/git/kdd-cup-2013-track1/rf1.pickle",
+    "submission_path": "/home/khlee/git/kdd-cup-2013-track1/rf1.csv"
 }
