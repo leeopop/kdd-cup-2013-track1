@@ -11,7 +11,7 @@
 #limitations under the License.
 
 source("fn.base.R")
-load("data/traintest_features.RData")
+load("traintest_features.RData")
 
 flist <- setdiff(colnames(train), c("authorid","paperid"))
 set.seed(3454789)

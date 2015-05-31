@@ -1,4 +1,5 @@
 {
-	"working_dir": "D:/Dropbox/Eclipse/AuthorPaperIdentification/",
-    "postgres_conn_string": "host='localhost' dbname='AuthorPaperIdentification' user='postgres' password='abc_12345'"
+	"working_dir": "/home/khlee/workspace/2ndPlace/",
+	"model_path": "/home/khlee/workspace/2ndPlace/rf1.pickle",
+    "submission_path": "/home/khlee/workspace/2ndPlace/rf1.csv"
 }

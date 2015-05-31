@@ -14,36 +14,23 @@ source("fn.base.R")
 source("data.build.R")
 
 settings <- fromJSON(file="SETTINGS.json")
-dbname <- unlist(regmatches(settings$postgres_conn_string,gregexpr("dbname='[A-Za-z0-9]*'",settings$postgres_conn_string)))
-dbname <- unlist(regmatches(dbname,gregexpr("'[A-Za-z0-9]*'",dbname)))
-dbname <- gsub("[^A-Za-z]","",dbname)
-
-user <- unlist(regmatches(settings$postgres_conn_string,gregexpr("user='[A-Za-z0-9]*'",settings$postgres_conn_string)))
-user <- unlist(regmatches(user,gregexpr("'[A-Za-z0-9]*'",user)))
-user <- gsub("[^A-Za-z]","",user)
-
-password <- unlist(regmatches(settings$postgres_conn_string,gregexpr("password='[A-Za-z0-9_]*'",settings$postgres_conn_string)))
-password <- unlist(regmatches(password,gregexpr("'[A-Za-z0-9_]*'",password)))
-password <- gsub("[^A-Za-z0-9_]","",password)
-
-drv <- dbDriver("PostgreSQL")
-con <- dbConnect(drv, dbname = dbname, user=user, password=password)
-
-data.author <- data.table(dbGetQuery(con, statement = "SELECT * FROM Author"),key=c("id"))
+data.author <- fn.read.input.csv("Author.csv", key=c("id")) # data.table(dbGetQuery(con, statement = "SELECT * FROM Author"),key=c("id"))
 setnames(data.author, c("authorid", "a_name", "a_affiliation"))
 data.author <- data.author[,list(authorid,a_name,a_name_cleaned=cleanTextField(a_name),a_affiliation,a_affiliation_cleaned = cleanTextField(a_affiliation))]
 
-data.sameauthors <- data.table(read.csv(file="data/Track2_Dup.csv"))
+data.sameauthors <- data.table(read.csv(file="Track2_Dup.csv"))
 setnames(data.sameauthors,c("authorid","duplicated_authorid"))
 data.sameauthors[,duplicated_authorid:=as.character(duplicated_authorid)]
 data.sameauthors <- data.sameauthors[,list(new_authorid = max(as.numeric(unlist(strsplit(duplicated_authorid," "))))),by="authorid"]
 data.author <- merge(data.author,data.sameauthors,by="authorid",all.x=TRUE)
 
-data.conference <- data.table(dbGetQuery(con, statement = "SELECT * FROM Conference"),key=c("id"))
+#data.conference <- data.table(dbGetQuery(con, statement = "SELECT * FROM Conference"),key=c("id"))
+data.conference <- fn.read.input.csv("Conference.csv", key=c("id"))
 setnames(data.conference, c("conferenceid", "conf_shortname", "conf_fullname", "conf_homepage"))
 data.conference$conf_hpdomain <- gsub("^http://([^/]+).*$", "\\1", data.conference$conf_homepage)
 data.conference <- data.conference[,list(conferenceid,conf_shortname,conf_fullname = cleanTextField(conf_fullname),conf_homepage = cleanWebField(conf_homepage))]
-data.journal <- data.table(dbGetQuery(con, statement = "SELECT * FROM Journal"),key=c("id"))
+#data.journal <- data.table(dbGetQuery(con, statement = "SELECT * FROM Journal"),key=c("id"))
+data.journal <- fn.read.input.csv("Journal.csv", key=c("id"))
 setnames(data.journal, c("journalid", "j_shortname", "j_fullname", "j_homepage"))
 data.journal$j_hpdomain <- gsub("^http://([^/]+).*$", "\\1", data.journal$j_homepage)
 data.journal <- data.journal[,list(journalid,j_shortname,j_fullname = cleanTextField(j_fullname),j_homepage = cleanWebField(j_homepage))]
@@ -64,7 +51,8 @@ setkey(data.feats,authorid,paperid)
 author.ids <- unique(data.feats[,authorid])
 paper.ids <- unique(data.feats[,paperid])
 
-data.paper <- data.table(dbGetQuery(con, statement = "SELECT * FROM Paper"))
+#data.paper <- data.table(dbGetQuery(con, statement = "SELECT * FROM Paper"))
+data.paper <- fn.read.input.csv("Paper.csv")
 setnames(data.paper, c("paperid", "title", "year", "conferenceid", "journalid", "keyword"))
 data.paper[,year:=ifelse((year<1600 | year>2013),-1,year)]
 data.paper <- data.paper[,list(paperid,conferenceid,journalid,year,keyword,new_paperid=max(paperid)),by=c("title")]
@@ -77,7 +65,8 @@ data.paper <- merge(data.paper,data.paper.freq,by="new_paperid")
 setkey(data.paper,new_paperid)
 data.paper.extraclean <- unique(data.paper)
 
-data.paper.author <- data.frame(dbGetQuery(con, statement = "SELECT * FROM PaperAuthor"))
+#data.paper.author <- data.frame(dbGetQuery(con, statement = "SELECT * FROM PaperAuthor"))
+data.paper.author <- fn.read.input.csv("PaperAuthor.csv")
 setnames(data.paper.author, c("paperid", "authorid", "pa_name", "pa_affiliation"))
 data.paper.author <- data.paper.author[,c("authorid", "paperid", "pa_name", "pa_affiliation")]
 data.paper.author <- data.table(data.paper.author, key = c("authorid", "paperid"))
@@ -102,7 +91,8 @@ data.paper.author.clean <- data.paper.author.clean[,list(authorid,paperid,pa_nam
 setkey(data.paper.author.clean,paperid)
 data.paper.author.extraclean <- data.paper.author.clean[J(data.paper.extraclean[,paperid])]
 
-data.keyword <- data.table(dbGetQuery(con, statement = "SELECT * FROM Keywords"))
+#data.keyword <- data.table(dbGetQuery(con, statement = "SELECT * FROM Keywords"))
+data.keyword <- fn.read.input.csv("keywords.csv")
 
 data.pa.p <- merge(data.paper.author,data.paper,by="paperid")
 data.pa.p <- merge(data.pa.p,data.author[,list(authorid,new_authorid)],by="authorid",all.x=TRUE)

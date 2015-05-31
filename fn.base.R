@@ -1,21 +1,9 @@
-#Copyright [2013] [Lucas Silva, Dmitry Efimov, Ben Solecki ]
-
-#Licensed under the Apache License, Version 2.0 (the "License");
-#you may not use this file except in compliance with the License.
-#You may obtain a copy of the License at
-#http://www.apache.org/licenses/LICENSE-2.0
-#Unless required by applicable law or agreed to in writing, software
-#distributed under the License is distributed on an "AS IS" BASIS,
-#WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#See the License for the specific language governing permissions and
-#limitations under the License.
-
 require("compiler")
 enableJIT(3) 
 setCompilerOptions(suppressUndefined = T)
 options(stringsAsFactors = FALSE)
 
-path.input <- "./data"
+path.input <- "."
 path.wd <- getwd()
 
 map.n <- 1000
@@ -152,8 +140,8 @@ fn.log.file <- function(name) {
 # input file path
 #############################################################
 fn.input.file <- function(name) {
-  paste(path.input, name, sep="/")
-#   name
+  #paste(path.input, name, sep="/")
+  name
 }
 
 #############################################################
@@ -217,7 +205,7 @@ fn.submission.file <- function(name) {
 # data file path
 #############################################################
 fn.data.file <- function(name) {
-  paste(path.wd, "data", name, sep="/")
+  paste(path.wd, name, sep="/")
 }
 
 #############################################################
@@ -656,8 +644,7 @@ fn.expand.factors <- function(data.df) {
 ##############################################################
 ## calculates confirm status for other authors
 ##############################################################
-fn.build.confirm.stats <- function(cv.folds, df, 
-                                   stats.cols,
+fn.build.confirm.stats <- function(cv.folds, df, stats.cols,
                                    fn.weight = function (x) log(1+x)) {
   library("data.table")
   df.new <- data.frame(df)
@@ -677,65 +664,65 @@ fn.build.confirm.stats <- function(cv.folds, df,
   fn.register.wk()
   data.stats.by.author.col.cv <- foreach(k=1:(cv.folds$K+1),.combine=rbind, 
                                          .export = c(lsf.str(.GlobalEnv))) %dopar% {
-                                           #   for (k in 1:(cv.folds$K+1)) {
-                                           library("data.table")
-                                           library("cvTools")
-                                           data.stats <- data.table(df.new)
-                                           data.stats$select <- F
-                                           
-                                           
-                                           if (k <= cv.folds$K) {
-                                             data.stats$select <- fn.cv.which(cv.folds,data.stats,k)
-                                             data.stats$target[data.stats$select] <- -1
-                                           } else {
-                                             data.stats$select <- data.stats$target == -1
-                                           }
-                                           
-                                           data.stats.by.author.col <- data.stats[
-                                             ,list(aut.pos = sum(target == 1)/sum(target >= 0),
-                                                   aut.neg = sum(target == 0)/sum(target >= 0),
-                                                   aut.weight =  fn.weight(sum(target >= 0)),
-                                                   select = select[1]),
-                                              by = c("authorid", stats.cols)]
-                                           data.stats.by.author.col$aut.pos <- 
-                                             data.stats.by.author.col$aut.pos*data.stats.by.author.col$aut.weight
-                                           data.stats.by.author.col$aut.neg <- 
-                                             data.stats.by.author.col$aut.neg*data.stats.by.author.col$aut.weight
-                                           data.stats.by.author.col$aut.pos[is.na(data.stats.by.author.col$aut.pos)] <- 0
-                                           data.stats.by.author.col$aut.neg[is.na(data.stats.by.author.col$aut.neg)] <- 0
-                                           
-                                           data.stats.by.col <- data.stats.by.author.col[
-                                             ,list(col.pos = sum(aut.pos, na.rm = T),
-                                                   col.neg = sum(aut.neg, na.rm = T)),
-                                              by = stats.cols]
-                                           setkeyv(data.stats.by.col, stats.cols)
-                                           
-                                           data.stats.by.author.col <- fn.join(data.stats.by.author.col,
-                                                                               data.stats.by.col)
-                                           data.stats.by.author.col$other.pos <- 
-                                             data.stats.by.author.col$col.pos - 
-                                             data.stats.by.author.col$aut.pos
-                                           
-                                           data.stats.by.author.col$other.neg <- 
-                                             data.stats.by.author.col$col.neg - 
-                                             data.stats.by.author.col$aut.neg
-                                           
-                                           data.stats.by.author.col$type <- ifelse(k <= cv.folds$K, "tr", "test")
-                                           data.stats.by.author.col <-
-                                             data.stats.by.author.col[
-                                               ,c("authorid", stats.cols, "other.pos", "other.neg", 
-                                                  "select", "type"),
-                                                with = F]
-                                           
-                                           setnames(data.stats.by.author.col, "other.pos", col.pos)
-                                           setnames(data.stats.by.author.col, "other.neg", col.neg)
-                                           
-                                           #     data.stats.by.author.col.cv <- rbind(
-                                           #       data.stats.by.author.col.cv,
-                                           #       data.stats.by.author.col[data.stats.by.author.col$select,])
-                                           
-                                           data.stats.by.author.col[data.stats.by.author.col$select,]
-                                         }
+#   for (k in 1:(cv.folds$K+1)) {
+    library("data.table")
+    library("cvTools")
+    data.stats <- data.table(df.new)
+    data.stats$select <- F
+    
+    
+    if (k <= cv.folds$K) {
+      data.stats$select <- fn.cv.which(cv.folds,data.stats,k)
+      data.stats$target[data.stats$select] <- -1
+    } else {
+      data.stats$select <- data.stats$target == -1
+    }
+    
+    data.stats.by.author.col <- data.stats[
+      ,list(aut.pos = sum(target == 1)/sum(target >= 0),
+            aut.neg = sum(target == 0)/sum(target >= 0),
+            aut.weight = fn.weight(sum(target >= 0)),
+            select = select[1]),
+      by = c("authorid", stats.cols)]
+    data.stats.by.author.col$aut.pos <- 
+      data.stats.by.author.col$aut.pos*data.stats.by.author.col$aut.weight
+    data.stats.by.author.col$aut.neg <- 
+      data.stats.by.author.col$aut.neg*data.stats.by.author.col$aut.weight
+    data.stats.by.author.col$aut.pos[is.na(data.stats.by.author.col$aut.pos)] <- 0
+    data.stats.by.author.col$aut.neg[is.na(data.stats.by.author.col$aut.neg)] <- 0
+    
+    data.stats.by.col <- data.stats.by.author.col[
+      ,list(col.pos = sum(aut.pos, na.rm = T),
+            col.neg = sum(aut.neg, na.rm = T)),
+      by = stats.cols]
+    setkeyv(data.stats.by.col, stats.cols)
+    
+    data.stats.by.author.col <- fn.join(data.stats.by.author.col,
+                                        data.stats.by.col)
+    data.stats.by.author.col$other.pos <- 
+      data.stats.by.author.col$col.pos - 
+      data.stats.by.author.col$aut.pos
+    
+    data.stats.by.author.col$other.neg <- 
+      data.stats.by.author.col$col.neg - 
+      data.stats.by.author.col$aut.neg
+    
+    data.stats.by.author.col$type <- ifelse(k <= cv.folds$K, "tr", "test")
+    data.stats.by.author.col <-
+      data.stats.by.author.col[
+        ,c("authorid", stats.cols, "other.pos", "other.neg", 
+           "select", "type"),
+        with = F]
+    
+    setnames(data.stats.by.author.col, "other.pos", col.pos)
+    setnames(data.stats.by.author.col, "other.neg", col.neg)
+  
+#     data.stats.by.author.col.cv <- rbind(
+#       data.stats.by.author.col.cv,
+#       data.stats.by.author.col[data.stats.by.author.col$select,])
+    
+    data.stats.by.author.col[data.stats.by.author.col$select,]
+  }
   fn.kill.wk()
   
   data.stats.by.author.col <- data.stats.by.author.col.cv
@@ -747,6 +734,7 @@ fn.build.confirm.stats <- function(cv.folds, df,
   df.new <- data.table(df.new, key = c("authorid", "paperid"))
   df.new
 }
+
 # debug(fn.build.confirm.stats)
 
 ##############################################################
@@ -766,15 +754,15 @@ fn.train.lmer <-  function(formula,
   model$formula <- formula;
   model$family <- family;
   
-  
+    
   # Estimate LMER
   lme.model = glmer(
-    formula=formula,
-    data=data,
-    family = family,
-    weights = weights,
-    verbose = verbose);
-  
+      formula=formula,
+      data=data,
+      family = family,
+      weights = weights,
+      verbose = verbose);
+    
   # get the constant term
   model$fixef <- fixef(lme.model)
   model$ranef <- ranef(lme.model)
@@ -794,7 +782,7 @@ fn.train.lmer <-  function(formula,
     setkeyv(model$dt[[name]], name)
   }
   gc()
-  
+
   model$predict <- function(data) {
     library("data.table")
     pred <- rep(model$const, nrow(data))
@@ -806,7 +794,7 @@ fn.train.lmer <-  function(formula,
     }
     return (model$family$linkinv(pred));
   }
-  #   debug(model$predict)
+#   debug(model$predict)
   
   invisible (model)
 };
@@ -815,70 +803,38 @@ fn.train.lmer <-  function(formula,
 ##############################################################
 ## creates likelihood feature
 ##############################################################
-fn.log.likelihood <- function(feats.stats, 
-                              family = "gaussian",
-                              type.keep = NULL) {
+fn.log.likelihood <- function(feats.stats, type.keep = NULL) {
   
   col.pos <- colnames(feats.stats)[grepl("other_pos", colnames(feats.stats))]
   col.neg <- colnames(feats.stats)[grepl("other_neg", colnames(feats.stats))]
   feats.stats.df <- data.frame(feats.stats)
   feats.stats.df$sum_pos_neg <- feats.stats.df[[col.pos]] + 
     feats.stats.df[[col.neg]]
-  feats.stats.df$pos_prob <- 
-    feats.stats.df[[col.pos]]/feats.stats.df$sum_pos_neg
-  feats.stats.df$pos_prob[is.na(feats.stats.df$pos_prob)] <- 0
-  feats.stats.df$neg_prob <- 
-    feats.stats.df[[col.neg]]/feats.stats.df$sum_pos_neg
-  feats.stats.df$neg_prob[is.na(feats.stats.df$neg_prob)] <- 0
   
   library("data.table")
   feats.stats.df.key <- unique(data.table(feats.stats.df[
-    ,c(col.pos, col.neg, "sum_pos_neg", "pos_prob", "neg_prob")]))
+    ,c(col.pos, col.neg, "sum_pos_neg")]))
   setkeyv(feats.stats.df.key, c(col.pos, col.neg, "sum_pos_neg"))
   feats.stats.df.key$id <- 1:nrow(feats.stats.df.key)
   
-  if (family == "gaussian") {
-    df.all <- data.frame(
-      target = feats.stats.df.key$pos_prob,
-      id = feats.stats.df.key$id,
-      weights = feats.stats.df.key$sum_pos_neg)
-    df.all <- rbind(df.all,
-                    data.frame(target = c(0,1), 
-                               id = c(-1,-1),
-                               weights = c(1,1)))
-    df.lmer <- df.all[df.all$weights > 0 ,]
-    lmer.model <- fn.train.lmer(formula=target ~ 1 + (1|id),
-                                data = df.lmer,
-                                weights = weights,
-                                family = gaussian(),
-                                verbose = T)
-  }
+  df.all <- data.frame(target = feats.stats.df.key[[col.pos]]/
+                         feats.stats.df.key$sum_pos_neg,
+                       id = feats.stats.df.key$id,
+                       weights = feats.stats.df.key$sum_pos_neg)
+  df.all <- df.all[df.all$weights > 0 ,]
+  df.all <- rbind(df.all,
+                  data.frame(target = c(0,1), 
+                             id = c(-1,-1),
+                             weights = c(1,1)))
   
-  if (family == "binomial") {
-    df.all.pos <- data.frame(
-      target = 1,
-      id = feats.stats.df.key$id,
-      weights = 
-        feats.stats.df.key$pos_prob*
-        feats.stats.df.key$sum_pos_neg)
-    df.all.neg <- data.frame(
-      target = 0,
-      id = feats.stats.df.key$id,
-      weights = 
-        feats.stats.df.key$neg_prob*
-        feats.stats.df.key$sum_pos_neg)
-    
-    df.lmer <- rbind(df.all.pos[df.all.pos$weights > 0,],
-                     df.all.neg[df.all.neg$weights > 0,])
-    
-    #   cat("Training ", col.pos, "likelihood model: \n")
-    lmer.model <- suppressWarnings(
-      fn.train.lmer(formula=target ~ 1 + (1|id),
-                    data = df.lmer,
-                    weights = weights,
-                    family = binomial(),
-                    verbose = T))
-  }
+  df.lmer <- df.all
+  
+#   cat("Training ", col.pos, "likelihood model: \n")
+  lmer.model <- fn.train.lmer(formula=target ~ 1 + (1|id),
+                              data = df.lmer,
+                              weights = weights,
+                              family = gaussian(),
+                              verbose = F)
   
   col.likelihood <- sub("other_pos", "prob", col.pos)
   feats.stats.df.key[[col.likelihood]] <- lmer.model$predict(data.frame(feats.stats.df.key))
@@ -892,10 +848,6 @@ fn.log.likelihood <- function(feats.stats,
     feats.stats.type <- feats.stats[, c("authorid", "paperid", "type"), with = F]
     result.dt <- fn.join(result.dt, feats.stats.type)
     result.dt <- result.dt[result.dt$type == type.keep,]
-    result.dt$type <- NULL
-  }
-  
-  if (!is.null(result.dt$type)) {
     result.dt$type <- NULL
   }
   
@@ -1274,151 +1226,4 @@ fn.rbind <- function(...) {
     }
   }
   df.all
-}
-
-#############################################################
-# Dmitry's utils.R
-#############################################################
-library(rjson)
-library(RPostgreSQL)
-library(data.table)
-library(hexbin)
-library(gbm)
-library(tm)
-stopwords_web <- c('www','html','com','org','journal','journals','index','openurl','url','htm','shtml','php')
-
-fn.print.map.err <- function(actual, pred, do.print = T) { 
-  actual <- data.table(actual)
-  pred <- data.table(pred)
-  actual.pred <- merge(actual[,list(authorid,paperid,target)],pred[,list(authorid,paperid,pred)],by=c("authorid","paperid"))
-  actual.pred <- data.frame(actual.pred)
-  authors.unique <- unique(actual.pred$authorid)
-  actual.list <- list()
-  predicted.list <- list()
-  apks <- c()
-  for (j in 1:length(authors.unique)) {
-    author <- authors.unique[j]
-    ix <- which(actual.pred$authorid==author)
-    actual.j <- as.numeric(actual.pred$paperid[which(actual.pred$authorid==author & actual.pred$target==1)])
-    predicted.j <- as.numeric(actual.pred$paperid[ix][sort(actual.pred$pred[ix],decreasing=TRUE,index.return=TRUE)$ix])
-    actual.list[[j]] <- actual.j
-    predicted.list[[j]] <- predicted.j
-    apks <- c(apks,apk_m(actual.j,predicted.j))
-  }
-  df <- data.frame(Length = nrow(actual.pred),
-                   MAPerror = mapk_m(actual.list,predicted.list))
-  
-  if (do.print) {
-    print (df)
-  }
-  
-  invisible(df)
-}
-
-apk_m <- function(actual, predicted) {
-  score <- 0.0
-  cnt <- 0.0
-  for (i in 1:length(predicted)) {
-    if (predicted[i] %in% actual && !(predicted[i] %in% predicted[0:(i-1)])) {
-      cnt <- cnt + 1
-      score <- score + cnt/i
-    }
-  }
-  score <- score / length(actual)
-  return (score)
-}
-
-mapk_m <- function (actual, predicted) {
-  scores <- rep(0, length(actual))
-  for (i in 1:length(scores)){
-    scores[i] <- apk_m(actual[[i]], predicted[[i]])
-  }
-  score <- mean(scores)
-  return (score)
-}
-
-cleanTextField <- function(field) {
-  field1 <- tolower(gsub("[^A-Za-z0-9 _]"," ",field))
-  field1 <- gsub(" . |^. | .$"," ",field1)
-  field1 <- gsub("^ +","",field1)
-  field1 <- gsub(" +$","",field1)
-  field1 <- gsub(" +"," ",field1)
-  return (field1)
-}
-
-cleanWebField <- function(field) {
-  field1 <- tolower(gsub("http://","",field))
-  field1 <- gsub("/"," ",field1)
-  field1 <- gsub("\\."," ",field1)
-  field1 <- gsub(" . |^. | .$"," ",field1)
-  field1 <- gsub("^ +","",field1)
-  field1 <- gsub(" +$","",field1)
-  field1 <- gsub(" +"," ",field1)
-  return (field1)
-}
-
-chooseTextField <- function(field) {
-  if (length(field)==1) return (field[1])
-  ix <- which(nchar(field)>0)
-  if (length(ix) == 0) {
-    return ("")
-  } else {
-    return (field[ix][which.min(nchar(field[ix]))[1]])
-  }
-}
-
-checkEquals <- function(field1,field2) {
-  field1 <- field1[!is.na(field1)]
-  field1 <- field1[which(nchar(field1)>0)]
-  field2 <- field2[!is.na(field2)]
-  field2 <- field2[which(nchar(field2)>0)]
-  if (length(intersect(field1,field2))>0) return (1)
-  return (0)
-}
-
-
-yearFeature <- function(years) {
-  years_sorted <- unique(sort(years))
-  years_codes <- unlist(sapply(years,function(x) which(years_sorted==x)))-1
-  return (years_codes)
-}
-
-distCenter <- function(fea) {
-  sds <- apply(fea,2,sd)
-  ix <- which(sds!=0)
-  fea_scaled <- scale(fea[,ix])
-  center <- matrix(rep(colMeans(fea_scaled), nrow(fea_scaled)), byrow=T, ncol=ncol(fea_scaled))
-  return (sqrt(rowSums((fea_scaled-center)^2)))
-}
-
-export2libfm <- function(df,targ,filename) {
-  if (nchar(targ) > 0) {
-    df_libfm <- data.frame(target=df[,targ])
-  } else {
-    df_libfm <- data.frame(target=rep(-1,nrow(df)))
-  }
-  cols <- setdiff(colnames(df),targ)
-  for (i in 1:length(cols)) {
-    df_libfm <- cbind(df_libfm, paste(i,":",format(df[,cols[i]],trim=TRUE,scientific=FALSE),sep=""))
-  }
-  #if (nchar(targ) > 0) {
-    write.table(df_libfm,file=filename,quote=FALSE,sep=" ",row.names=FALSE,col.names=FALSE)
-  #} else {
-  #write.table(df_libfm[,-1],file=filename,quote=FALSE,sep=" ",row.names=FALSE,col.names=FALSE)
-  #}
-}
-
-export2ranklib <- function(df,targ,groupname,filename) {
-  if (nchar(targ) > 0) {
-    df_ranklib <- data.frame(target=df[,targ])
-  } else {
-    df_ranklib <- data.frame(target=rep(-1,nrow(df)))
-  }
-  df_ranklib[,'group'] <- paste("qid:",format(df[,groupname],trim=TRUE,scientific=FALSE),sep="")
-
-  cols <- setdiff(colnames(df),c(targ,groupname))
-  for (i in 1:length(cols)) {
-    df_ranklib <- cbind(df_ranklib, paste(i,":",format(df[,cols[i]],trim=TRUE,scientific=FALSE),sep=""))
-  }
-  write.table(df_ranklib,file=filename,quote=FALSE,sep=" ",row.names=FALSE,col.names=FALSE)
 }

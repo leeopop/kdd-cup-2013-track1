@@ -11,7 +11,7 @@
 #limitations under the License.
 
 library(data.table)
-data.train.ids <- data.table(read.csv("data/TrainInitial.csv",stringsAsFactors=FALSE))
+data.train.ids <- data.table(read.csv(fn.input.file("TrainInitial.csv"),stringsAsFactors=FALSE))
 setnames(data.train.ids,c("authorid","confirmedpaperids","deletedpaperids"))
 data.train.confirm <- data.train.ids[
   ,list(paperid = as.integer(unlist(strsplit(confirmedpaperids, split = "\\s+"))),
@@ -24,7 +24,7 @@ data.train.delete <- data.train.ids[
 data.train.ids <- rbind(data.train.confirm,
                         data.train.delete)
 
-data.valid.ids <- data.table(read.csv("data/ValidInitial.csv",stringsAsFactors=FALSE))
+data.valid.ids <- data.table(read.csv(fn.input.file("ValidInitial.csv"),stringsAsFactors=FALSE))
 setnames(data.valid.ids,c("authorid","paperids"))
 data.valid.ids <- data.valid.ids[
   ,list(paperid = as.integer(unlist(strsplit(paperids, split = "\\s+"))),
@@ -32,7 +32,7 @@ data.valid.ids <- data.valid.ids[
   by="authorid"]
 data.valid.ids <- data.valid.ids[,list(count=c(1:length(confirmed))),by=c("authorid","paperid")]
 
-data.valid.confirm <- data.table(read.csv("data/ValidInitialSolution.csv",stringsAsFactors=FALSE)[,1:2])
+data.valid.confirm <- data.table(read.csv(fn.input.file("ValidInitialSolution.csv"),stringsAsFactors=FALSE)[,1:2])
 setnames(data.valid.confirm,c("authorid","paperids"))
 data.valid.confirm <- data.valid.confirm[
   ,list(paperid = as.integer(unlist(strsplit(paperids, split = "\\s+"))),
@@ -48,9 +48,9 @@ data.train.ids <- rbind(data.train.ids,data.valid.ids)
 data.train.new <- data.train.ids[,list(confirmedpaperids = paste(paperid[confirmed==1],collapse=" "), deletedpaperids = paste(paperid[confirmed==0],collapse=" ")),by="authorid"]
 setnames(data.train.new,c("AuthorId","ConfirmedPaperIds","DeletedPaperIds"))
 data.train.new <- data.frame(data.train.new)
-write.csv(data.train.new,file="data/Train.csv",row.names=FALSE,quote=FALSE)
+write.csv(data.train.new,file="Train.csv",row.names=FALSE,quote=FALSE)
 
-data.test.ids <- data.table(read.csv("data/TestPaper.csv",stringsAsFactors=FALSE))
+data.test.ids <- data.table(read.csv(fn.input.file("TestPaper.csv"),stringsAsFactors=FALSE))
 setnames(data.test.ids,c("authorid","paperid"))
 data.test.ids <- data.test.ids[,list(authorid,paperid,confirmed=-1)]
 
