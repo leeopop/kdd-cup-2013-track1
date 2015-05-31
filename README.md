@@ -17,23 +17,24 @@ limitations under the License.
 # How to use it
 1. The hardware / OS platform you used
 Windows 7 Professional x64 or Ubuntu (tested on 12.04)
+Windows 8.1 Professional x64 or Ubuntu (tested on 14.04)
 
 2. Any necessary 3rd-party software (+ installation steps)
 
 R 2.15.3 (http://www.r-project.org/)
-Packages: rjson, RPostgreSQL, data.table, hexbin, gbm, tm, parallel, doSNOW, foreach, Metrics, cvTools, lme4, rlecuyer
+Packages: rjson, RPostgreSQL, data.table, hexbin, gbm, tm, parallel, doSNOW, foreach, Metrics, cvTools, lme4, rlecuyer, infotheo
 
-Python 2.6 (http://www.python.org/download/releases/2.6/) 
-Packages: csv, json, os, pickle, psycopg2, textmining, re
+Python 3.x (https://www.python.org/downloads/) 
+Packages: csv, json, os, pickle, textmining, re
 
 # How to train models and make predictions on a new test set
 
 The file list with description
 1) SETTINGS.json
-File of paths and login information for Postgree SQL.
+File of paths.
 
 2) TDM_TitleKeywords.py
-File to generate table Keywords in Postgree SQL.
+File to generate table Keywords in csv form.
 
 3) feature_engineering.R
 Main files of feature engineering
@@ -55,9 +56,9 @@ File of greedy author duplicates from Track 2
 
 # To calculate model
 
-1) Set paths and login information for Postgree SQL in SETTINGS.json.
+1) Set paths in SETTINGS.json.
 2) Add all the inputs csvs to the directory data.
-3) Run TDM_TitleKeywords.py in Python 2.6.
+3) Run TDM_TitleKeywords.py in Python 3.x.
 4) Set working directory in R to the directory contained R files.
 5) Run feature_engineering.R.
 6) Run prediction.R.
