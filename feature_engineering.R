@@ -11,7 +11,7 @@
 #limitations under the License.
 
 source("fn.base.R")
-#source("data.build.R")
+source("data.build.R")
 
 settings <- fromJSON(file="SETTINGS.json")
 data.author <- fn.read.input.csv("Author.csv", key=c("id")) # data.table(dbGetQuery(con, statement = "SELECT * FROM Author"),key=c("id"))
@@ -66,7 +66,7 @@ setkey(data.paper,new_paperid)
 data.paper.extraclean <- unique(data.paper)
 
 #data.paper.author <- data.frame(dbGetQuery(con, statement = "SELECT * FROM PaperAuthor"))
-data.paper.author <- fn.read.input.csv("PaperAuthor.csv")
+data.paper.author <- data.frame(read.csv("PaperAuthor.csv"))
 setnames(data.paper.author, c("paperid", "authorid", "pa_name", "pa_affiliation"))
 data.paper.author <- data.paper.author[,c("authorid", "paperid", "pa_name", "pa_affiliation")]
 data.paper.author <- data.table(data.paper.author, key = c("authorid", "paperid"))
