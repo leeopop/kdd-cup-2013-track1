@@ -11,7 +11,7 @@
 #limitations under the License.
 
 source("fn.base.R")
-source("data.build.R")
+#source("data.build.R")
 
 settings <- fromJSON(file="SETTINGS.json")
 data.author <- fn.read.input.csv("Author.csv", key=c("id")) # data.table(dbGetQuery(con, statement = "SELECT * FROM Author"),key=c("id"))
@@ -639,8 +639,8 @@ test <- data.table(test)
 setkey(test,authorid,paperid)
 test <- as.data.frame(unique(test))  
 
-load("data/data.feat.likelihood.dt.RData")
-load("data/data.dup.source.dt.RData")
+load("data.feat.likelihood.dt.RData")
+load("data.dup.source.dt.RData")
 
 train <- data.table(train)
 train <- merge(train,data.feat.likelihood.dt,by=c("authorid","paperid"),all.x=TRUE)
@@ -653,4 +653,4 @@ test <- merge(test,data.dup.source.dt,by=c("authorid","paperid"),all.x=TRUE)
 setkey(test,authorid,paperid)
 test <- data.frame(test)
 
-save(train,test,file="data/traintest_features.RData")
+save(train,test,file="traintest_features.RData")
